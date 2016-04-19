@@ -8,6 +8,7 @@ import { $, ply, Executor, Expression, Dataset, Datum, TimeRange, TimeBucketActi
 import { Stage, Essence, Splits, SplitCombine, Filter, Dimension, Measure, DataSource, VisualizationProps, Resolve, Colors } from "../../../common/models/index";
 import { SPLIT, SEGMENT, TIME_SEGMENT, TIME_SORT_ACTION, VIS_H_PADDING } from '../../config/constants';
 import { getXFromEvent, getYFromEvent } from '../../utils/dom/dom';
+import { formatTimeRange, DisplayYear } from '../../utils/date/date';
 import { VisMeasureLabel } from '../../components/vis-measure-label/vis-measure-label';
 import { ChartLine } from '../../components/chart-line/chart-line';
 import { TimeAxis } from '../../components/time-axis/time-axis';
@@ -54,6 +55,7 @@ export interface TimeSeriesState {
   dataset?: Dataset;
   error?: any;
   dragStart?: number;
+  dragOnMeasure?: Measure;
   scrollLeft?: number;
   scrollTop?: number;
   hoverTimeRange?: TimeRange;
@@ -325,11 +327,14 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
     });
   }
 
-  onMouseDown(e: MouseEvent) {
+  onMouseDown(measure: Measure, e: MouseEvent) {
     var myDOM = ReactDOM.findDOMNode(this);
     var rect = myDOM.getBoundingClientRect();
     var dragStart = getXFromEvent(e) - (rect.left + VIS_H_PADDING);
-    this.setState({ dragStart });
+    this.setState({
+      dragStart,
+      dragOnMeasure: measure
+    });
   }
 
   onMouseMove(dataset: Dataset, measure: Measure, scaleX: any, e: MouseEvent) {
@@ -390,8 +395,8 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
   }
 
   renderChart(dataset: Dataset, measure: Measure, chartIndex: number, containerStage: Stage, chartStage: Stage, getX: any, scaleX: any, xTicks: Date[]): JSX.Element {
-    const { essence } = this.props;
-    const { scrollTop, hoverTimeRange, hoverDatums, hoverMeasure } = this.state;
+    const { essence, clicker } = this.props;
+    const { scrollTop, hoverTimeRange, hoverDatums, hoverMeasure, dragStart, dragOnMeasure } = this.state;
     const { splits, colors, timezone } = essence;
     var splitLength = splits.length();
 
@@ -481,12 +486,27 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
       }
     }
 
-    var chartSegmentBubble: JSX.Element = null;
-    if (hoverTimeRange && hoverDatums && hoverMeasure === measure) {
+    var hoverBubble: JSX.Element = null;
+    var highlightBubble: JSX.Element = null;
+    if (essence.highlightOn(TimeSeries.id, measureName)) {
+      var highlightTimeRange = essence.getSingleHighlightSet().elements[0];
+
+      var leftOffset = containerStage.x + VIS_H_PADDING + scaleX(highlightTimeRange.midpoint());
+      var topOffset = chartStage.height * chartIndex + scaleY(extentY[1]) + TEXT_SPACER - scrollTop - HOVER_BUBBLE_V_OFFSET;
+      if (topOffset > 0) {
+        highlightBubble = <SegmentBubble
+          top={containerStage.y + topOffset}
+          left={leftOffset}
+          timezone={timezone}
+          segmentLabel={formatTimeRange(highlightTimeRange, timezone, DisplayYear.NEVER)}
+          clicker={clicker}
+        />;
+      }
+    } else if (hoverTimeRange && hoverDatums && hoverMeasure === measure) {
       var leftOffset = containerStage.x + VIS_H_PADDING + scaleX(hoverTimeRange.midpoint());
       var topOffset = chartStage.height * chartIndex + scaleY(extentY[1]) + TEXT_SPACER - scrollTop - HOVER_BUBBLE_V_OFFSET;
       if (colors) {
-        chartSegmentBubble = <HoverMultiBubble
+        hoverBubble = <HoverMultiBubble
           essence={essence}
           datums={hoverDatums}
           measure={measure}
@@ -497,23 +517,37 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
       } else {
         var getValue = (d: Datum) => d[TIME_SEGMENT];
         if (topOffset > 0) {
-          chartSegmentBubble = <SegmentBubble
-            timezone={timezone}
-            datum={hoverDatums[0]}
-            measure={measure}
-            getValue={getValue}
-            getY={getY}
+          hoverBubble = <SegmentBubble
             top={containerStage.y + topOffset}
             left={leftOffset}
+            timezone={timezone}
+            segmentLabel={formatTimeRange(getValue(hoverDatums[0]) as TimeRange, timezone, DisplayYear.NEVER)}
+            measureLabel={hoverMeasure.formatFn(getY(hoverDatums[0]))}
           />;
         }
       }
     }
 
+    var highlighter: JSX.Element = null;
+    if (dragStart !== null || essence.highlightOn(TimeSeries.id)) {
+      var timeSplit = splits.last();
+      var timeBucketAction = timeSplit.bucketAction as TimeBucketAction;
+      highlighter = <Highlighter
+        clicker={clicker}
+        essence={essence}
+        highlightId={TimeSeries.id}
+        scaleX={scaleX}
+        dragStart={dragStart}
+        dragOnMeasure={dragOnMeasure}
+        duration={timeBucketAction.duration}
+        onClose={this.onHighlightEnd.bind(this)}
+      />;
+    }
+
     return <div
       className="measure-time-chart"
       key={measureName}
-      onMouseDown={this.onMouseDown.bind(this)}
+      onMouseDown={this.onMouseDown.bind(this, measure)}
       onMouseMove={this.onMouseMove.bind(this, mySplitDataset, measure, scaleX)}
       onMouseLeave={this.onMouseLeave.bind(this, measure)}
     >
@@ -536,13 +570,16 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
         />
       </svg>
       <VisMeasureLabel measure={measure} datum={myDatum}/>
-      {chartSegmentBubble}
+      {highlighter}
+      {hoverBubble}
+      {highlightBubble}
     </div>;
+
   }
 
   render() {
-    var { clicker, essence, stage } = this.props;
-    var { loading, dataset, error, dragStart } = this.state;
+    var { essence, stage } = this.props;
+    var { loading, dataset, error } = this.state;
     var { splits, timezone } = essence;
 
     var measureCharts: JSX.Element[];
@@ -587,21 +624,6 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
       >
         <TimeAxis stage={xAxisStage} ticks={xTicks} scale={scaleX} timezone={timezone}/>
       </svg>;
-
-      var highlighter: JSX.Element = null;
-      if (dragStart !== null || essence.highlightOn(TimeSeries.id)) {
-        var timeSplit = splits.last();
-        var timeBucketAction = timeSplit.bucketAction as TimeBucketAction;
-        highlighter = <Highlighter
-          clicker={clicker}
-          essence={essence}
-          highlightId={TimeSeries.id}
-          scaleX={scaleX}
-          dragStart={dragStart}
-          duration={timeBucketAction.duration}
-          onClose={this.onHighlightEnd.bind(this)}
-        />;
-      }
     }
 
     var loader: JSX.Element = null;
@@ -625,7 +647,6 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
       {bottomAxis}
       {queryError}
       {loader}
-      {highlighter}
     </div>;
   }
 }

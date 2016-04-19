@@ -16,6 +16,7 @@ describe('Highlighter', () => {
       <Highlighter
         clicker={null}
         dragStart={null}
+        dragOnMeasure={null}
         duration={null}
         essence={null}
         highlightId={null}

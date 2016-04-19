@@ -7,7 +7,6 @@ import { $, r, TimeRange, Set } from 'plywood';
 import { Fn } from "../../../common/utils/general/general";
 import { Clicker, Essence, Filter, FilterClause, Dimension, Measure } from '../../../common/models/index';
 import { escapeKey, getXFromEvent, classNames } from '../../utils/dom/dom';
-import { HighlightControls } from '../highlight-controls/highlight-controls';
 
 export interface HighlighterProps extends React.Props<any> {
   clicker: Clicker;
@@ -15,8 +14,10 @@ export interface HighlighterProps extends React.Props<any> {
   highlightId: string;
   scaleX: any;
   dragStart: number;
+  dragOnMeasure: Measure;
   duration: Duration;
-  onClose: Fn;
+  onDragEnd: Fn;
+  onCancel: Fn;
 }
 
 export interface HighlighterState {
@@ -83,14 +84,14 @@ export class Highlighter extends React.Component<HighlighterProps, HighlighterSt
   }
 
   globalMouseUpListener(e: MouseEvent) {
-    var { clicker, essence, highlightId, duration, onClose } = this.props;
+    var { clicker, essence, highlightId, dragOnMeasure, duration, onCancel } = this.props;
     var { dragStartPx, pseudoHighlight } = this.state;
     var { timezone } = essence;
 
     if (dragStartPx === null) return;
     if (!pseudoHighlight) { // There was no mouse move so just quietly cancel out
       clicker.dropHighlight();
-      onClose();
+      onCancel();
       return;
     }
 
@@ -108,7 +109,7 @@ export class Highlighter extends React.Component<HighlighterProps, HighlighterSt
     var timeDimension = essence.getTimeDimension();
     clicker.changeHighlight(
       highlightId,
-      null,
+      dragOnMeasure.name,
       Filter.fromClause(new FilterClause({
         expression: timeDimension.expression,
         selection: r(timeRange)
@@ -118,12 +119,12 @@ export class Highlighter extends React.Component<HighlighterProps, HighlighterSt
 
   globalKeyDownListener(e: KeyboardEvent) {
     if (!escapeKey(e)) return;
-    var { onClose } = this.props;
-    onClose();
+    var { onCancel } = this.props;
+    onCancel();
   }
 
   render() {
-    var { clicker, essence, highlightId, scaleX, onClose } = this.props;
+    var { essence, highlightId, scaleX } = this.props;
     var { pseudoHighlight, dragStartPx } = this.state;
 
     var shownTimeRange = pseudoHighlight;
@@ -135,11 +136,6 @@ export class Highlighter extends React.Component<HighlighterProps, HighlighterSt
 
     if (!shownTimeRange) {
       return <div className='highlighter'></div>;
-    }
-
-    var highlightControls: JSX.Element = null;
-    if (dragStartPx === null) {
-      highlightControls = <HighlightControls clicker={clicker} orientation="vertical" onClose={onClose}/>;
     }
 
     var startPos = scaleX(shownTimeRange.start);
@@ -163,7 +159,7 @@ export class Highlighter extends React.Component<HighlighterProps, HighlighterSt
       onMouseDown={this.onMouseDown.bind(this)}
     >
       <div className="whiteout left" style={whiteoutLeftStyle}></div>
-      <div className="frame" style={frameStyle}>{highlightControls}</div>
+      <div className="frame" style={frameStyle}></div>
       <div className="whiteout right" style={whiteoutRightStyle}></div>
     </div>;
   }

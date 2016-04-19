@@ -407,24 +407,20 @@ export class BarChart extends React.Component<VisualizationProps, BarChartState>
       mySplitDataset.data.forEach((d) => {
         if (highlightBubble || !bubbleHighlightDelta.equals(getFilterFromDatum(splits, d))) return;
 
-        const url = essence.dataSource.getDimensionByExpression(splits.get(0).expression).url;
-        const urls = url ? [url] : [];
+        const dimension = essence.dataSource.getDimensionByExpression(splits.get(0).expression);
 
         var leftOffset = containerStage.x + VIS_H_PADDING + scaleX(d[SEGMENT]) + stepWidth / 2;
         var topOffset = chartStage.height * chartIndex - scrollTop + scaleY(getY(d)) + TEXT_SPACER - HOVER_BUBBLE_V_OFFSET;
         if (topOffset > 0) {
           highlightBubble = <SegmentBubble
-            timezone={timezone}
-            datum={d}
-            measure={measure}
-            getValue={getX}
-            getY={getY}
-            top={containerStage.y + topOffset}
             left={leftOffset}
+            top={containerStage.y + topOffset}
+            timezone={timezone}
+            dimension={dimension}
+            segmentLabel={String(getX(d))}
+            measureLabel={measure.formatFn(getY(d))}
             clicker={clicker}
             openRawDataModal={openRawDataModal}
-
-            urls={urls}
           />;
         }
       });
@@ -434,13 +430,11 @@ export class BarChart extends React.Component<VisualizationProps, BarChartState>
       var topOffset = chartStage.height * chartIndex - scrollTop + scaleY(getY(hoverDatum)) + TEXT_SPACER - HOVER_BUBBLE_V_OFFSET;
       if (topOffset > 0) {
         hoverBubble = <SegmentBubble
-          timezone={timezone}
-          datum={hoverDatum}
-          measure={measure}
-          getValue={getX}
-          getY={getY}
           top={containerStage.y + topOffset}
           left={leftOffset}
+          timezone={timezone}
+          segmentLabel={String(getX(hoverDatum))}
+          measureLabel={measure.formatFn(getY(hoverDatum))}
         />;
       }
     }
