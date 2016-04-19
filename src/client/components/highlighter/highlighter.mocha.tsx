@@ -14,13 +14,7 @@ describe('Highlighter', () => {
   it('adds the correct class', () => {
     var renderedComponent = TestUtils.renderIntoDocument(
       <Highlighter
-        clicker={null}
-        dragStart={null}
-        dragOnMeasure={null}
-        duration={null}
-        essence={null}
-        highlightId={null}
-        onClose={null}
+        highlightTimeRange={null}
         scaleX={null}
       />
     );

@@ -428,7 +428,6 @@ export class Table extends React.Component<VisualizationProps, TableState> {
             top={stage.y + HEADER_HEIGHT + rowY - scrollTop - HIGHLIGHT_BUBBLE_V_OFFSET}
             hideText={true}
             segmentLabel={segmentName}
-            timezone={essence.timezone}
             dimension={dimension}
             clicker={clicker}
             left={stage.x + stage.width / 2}

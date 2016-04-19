@@ -7,19 +7,18 @@ import '../../utils/require-extensions';
 import * as TestUtils from 'react-addons-test-utils';
 
 import { $, Expression } from 'plywood';
-import { SegmentBubble } from './segment-bubble';
+import { SegmentActionButtons } from './segment-action-buttons';
 
-describe('SegmentBubble', () => {
+describe('SegmentActionButtons', () => {
   it('adds the correct class', () => {
     var renderedComponent = TestUtils.renderIntoDocument(
-      <SegmentBubble
-        left={null}
-        top={null}
+      <SegmentActionButtons
+         clicker={null}
       />
     );
 
     expect(TestUtils.isCompositeComponent(renderedComponent), 'should be composite').to.equal(true);
-    expect((ReactDOM.findDOMNode(renderedComponent) as any).className, 'should contain class').to.contain('segment-bubble');
+    expect((ReactDOM.findDOMNode(renderedComponent) as any).className, 'should contain class').to.contain('segment-action-buttons');
   });
 
 });

@@ -401,24 +401,22 @@ export class BarChart extends React.Component<VisualizationProps, BarChartState>
       });
     }
 
-    var hoverBubble: JSX.Element = null;
-    var highlightBubble: JSX.Element = null;
+    var bubble: JSX.Element = null;
     if (bubbleHighlightDelta) {
       mySplitDataset.data.forEach((d) => {
-        if (highlightBubble || !bubbleHighlightDelta.equals(getFilterFromDatum(splits, d))) return;
+        if (bubble || !bubbleHighlightDelta.equals(getFilterFromDatum(splits, d))) return;
 
         const dimension = essence.dataSource.getDimensionByExpression(splits.get(0).expression);
 
         var leftOffset = containerStage.x + VIS_H_PADDING + scaleX(d[SEGMENT]) + stepWidth / 2;
         var topOffset = chartStage.height * chartIndex - scrollTop + scaleY(getY(d)) + TEXT_SPACER - HOVER_BUBBLE_V_OFFSET;
         if (topOffset > 0) {
-          highlightBubble = <SegmentBubble
+          bubble = <SegmentBubble
             left={leftOffset}
             top={containerStage.y + topOffset}
-            timezone={timezone}
             dimension={dimension}
             segmentLabel={String(getX(d))}
-            measureLabel={measure.formatFn(getY(d))}
+            measureLabel={measure.formatDatum(d)}
             clicker={clicker}
             openRawDataModal={openRawDataModal}
           />;
@@ -429,12 +427,11 @@ export class BarChart extends React.Component<VisualizationProps, BarChartState>
       var leftOffset = containerStage.x + VIS_H_PADDING + scaleX(hoverValue) + stepWidth / 2;
       var topOffset = chartStage.height * chartIndex - scrollTop + scaleY(getY(hoverDatum)) + TEXT_SPACER - HOVER_BUBBLE_V_OFFSET;
       if (topOffset > 0) {
-        hoverBubble = <SegmentBubble
+        bubble = <SegmentBubble
           top={containerStage.y + topOffset}
           left={leftOffset}
-          timezone={timezone}
           segmentLabel={String(getX(hoverDatum))}
-          measureLabel={measure.formatFn(getY(hoverDatum))}
+          measureLabel={measure.formatDatum(hoverDatum)}
         />;
       }
     }
@@ -461,8 +458,7 @@ export class BarChart extends React.Component<VisualizationProps, BarChartState>
       </svg>
       <div className="slanty-labels" style={xAxisStage.getLeftTopWidthHeight()}>{slantyLabels}</div>
       <VisMeasureLabel measure={measure} datum={myDatum}/>
-      {hoverBubble}
-      {highlightBubble}
+      {bubble}
     </div>;
   }
 
