@@ -656,12 +656,13 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
     var horizontalGridLines: JSX.Element;
     var chartLines: JSX.Element[];
     var verticalAxis: JSX.Element;
+    var bubble: JSX.Element;
     if (!isNaN(extentY[0]) && !isNaN(extentY[1])) {
-      var scaleY = d3.scale.linear()
+      let scaleY = d3.scale.linear()
         .domain([Math.min(extentY[0] * 1.1, 0), Math.max(extentY[1] * 1.1, 0)])
         .range([lineStage.height, 0]);
 
-      var yTicks = scaleY.ticks(5).filter((n: number) => n !== 0);
+      let yTicks = scaleY.ticks(5).filter((n: number) => n !== 0);
 
       horizontalGridLines = <GridLines
         orientation="horizontal"
@@ -709,6 +710,8 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
           />;
         });
       }
+
+      bubble = this.renderChartBubble(mySplitDataset, measure, chartIndex, containerStage, chartStage, extentY, scaleY);
     }
 
     return <div
@@ -738,7 +741,7 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
       </svg>
       <VisMeasureLabel measure={measure} datum={myDatum}/>
       {this.renderHighlighter()}
-      {this.renderChartBubble(mySplitDataset, measure, chartIndex, containerStage, chartStage, extentY, scaleY)}
+      {bubble}
     </div>;
 
   }
