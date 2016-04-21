@@ -430,8 +430,6 @@ export class Table extends React.Component<VisualizationProps, TableState> {
             segmentLabel={segmentName}
             dimension={dimension}
             clicker={clicker}
-            left={stage.x + stage.width / 2}
-            top={stage.y + HEADER_HEIGHT + rowY - scrollTop - HIGHLIGHT_BUBBLE_V_OFFSET}
             openRawDataModal={openRawDataModal}
           />;
         }

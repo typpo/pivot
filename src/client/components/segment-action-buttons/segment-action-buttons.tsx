@@ -79,11 +79,16 @@ export class SegmentActionButtons extends React.Component<SegmentActionButtonsPr
 
     const bubbleListItems = [
       <li
-        key="copyValue"
         className="clipboard"
+        key="copyValue"
         data-clipboard-text={segmentLabel}
         onClick={this.closeMoreMenu.bind(this)}
-      >{STRINGS.copyValue}</li>
+      >{STRINGS.copyValue}</li>,
+      <li
+        className="view-raw-data"
+        key="view-raw-data"
+        onClick={this.openRawDataModal.bind(this)}
+      >{STRINGS.viewRawData}</li>
     ];
 
     var url = this.getUrl();

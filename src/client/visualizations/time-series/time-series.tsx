@@ -525,7 +525,7 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
   }
 
   renderChartBubble(dataset: Dataset, measure: Measure, chartIndex: number, containerStage: Stage, chartStage: Stage, extentY: number[], scaleY: any): JSX.Element {
-    const { clicker, essence } = this.props;
+    const { clicker, essence, openRawDataModal } = this.props;
     const { scrollTop, dragTimeRange, roundDragTimeRange, dragOnMeasure, hoverTimeRange, hoverMeasure, scaleX } = this.state;
     const { colors, timezone } = essence;
 
@@ -573,6 +573,7 @@ export class TimeSeries extends React.Component<VisualizationProps, TimeSeriesSt
           segmentLabel={formatTimeRange(shownTimeRange, timezone, DisplayYear.NEVER)}
           measureLabel={highlightDatum ? measure.formatDatum(highlightDatum) : null}
           clicker={dragTimeRange ? null : clicker}
+          openRawDataModal={openRawDataModal}
         />;
       }
 
