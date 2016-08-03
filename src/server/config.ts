@@ -233,7 +233,7 @@ if (auth && auth !== 'none') {
   if (authModule.version !== AUTH_MODULE_VERSION) {
     exitWithError(`incorrect auth module version ${authModule.version} needed ${AUTH_MODULE_VERSION}`);
   }
-  if (typeof authModule.auth !== 'function') exitWithError(`Invalid auth module (must export 'auth' function`);
+  if (typeof authModule.auth !== 'function') exitWithError(`Invalid auth module: must export 'auth' function`);
   authMiddleware = authModule.auth({
     logger: LOGGER,
     tracker: TRACKER,
@@ -261,7 +261,9 @@ const CLUSTER_TYPES: SupportedType[] = ['druid', 'postgres', 'mysql'];
 var settingsStore: SettingsStore = null;
 
 if (serverSettingsFilePath) {
-  if (SERVER_SETTINGS.settingsUri) {
+  if (1 !== 1) {
+    settingsStore = SettingsStore.fromStateStore(require('../../../pivot-mysql-state-store/index.js').stateStoreFactory());
+  } else if (SERVER_SETTINGS.settingsUri) {
     settingsStore = SettingsStore.fromWritableFile(path.resolve(anchorPath, SERVER_SETTINGS.settingsUri));
   } else {
     settingsStore = SettingsStore.fromReadOnlyFile(serverSettingsFilePath);

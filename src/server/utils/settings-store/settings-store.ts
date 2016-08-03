@@ -22,13 +22,13 @@ import { MANIFESTS } from '../../../common/manifests/index';
 import { AppSettings } from '../../../common/models/index';
 import { appSettingsToYAML } from '../../../common/utils/yaml-helper/yaml-helper';
 
-function readSettingsYamlFactory(filepath: string) {
+function readSettingsYamlFactory(filepath: string, inline = false) {
   return () => {
     return Q(fs.readFile(filepath, 'utf-8')
       .then((fileData) => {
         var appSettingsJS = yaml.safeLoad(fileData);
-        appSettingsJS = inlineVars(appSettingsJS, process.env);
-        return Q(AppSettings.fromJS(appSettingsJS, { visualizations: MANIFESTS }));
+        if (inline) appSettingsJS = inlineVars(appSettingsJS, process.env);
+        return AppSettings.fromJS(appSettingsJS, { visualizations: MANIFESTS });
       })
     );
   };
@@ -45,6 +45,11 @@ function writeSettingsYamlFactory(filepath: string) {
   };
 }
 
+export interface StateStore {
+  readState: () => Q.Promise<string>;
+  writeState: (state: string) => Q.Promise<any>;
+}
+
 export class SettingsStore {
   static fromTransient(initAppSettings: AppSettings): SettingsStore {
     var settingsStore = new SettingsStore();
@@ -54,7 +59,7 @@ export class SettingsStore {
 
   static fromReadOnlyFile(filepath: string): SettingsStore {
     var settingsStore = new SettingsStore();
-    settingsStore.readSettings = readSettingsYamlFactory(filepath);
+    settingsStore.readSettings = readSettingsYamlFactory(filepath, true);
     return settingsStore;
   }
 
@@ -62,6 +67,25 @@ export class SettingsStore {
     var settingsStore = new SettingsStore();
     settingsStore.readSettings = readSettingsYamlFactory(filepath);
     settingsStore.writeSettings = writeSettingsYamlFactory(filepath);
+    return settingsStore;
+  }
+
+  static fromStateStore(stateStore: StateStore): SettingsStore {
+    var settingsStore = new SettingsStore();
+
+    settingsStore.readSettings = () => {
+      return Q(stateStore.readState()
+        .then((stateData) => AppSettings.fromJS(JSON.parse(stateData), { visualizations: MANIFESTS }))
+      );
+    };
+
+    settingsStore.writeSettings = (appSettings: AppSettings) => {
+      return Q.fcall(() => JSON.stringify(appSettings))
+        .then((appSettingsJSON) => {
+          return stateStore.writeState(appSettingsJSON);
+        });
+    };
+
     return settingsStore;
   }
 
