@@ -320,7 +320,7 @@ if (PRINT_CONFIG) {
       header: true,
       version: VERSION,
       verbose: VERBOSE,
-      port: SERVER_SETTINGS.port
+      port: SERVER_SETTINGS.getPort()
     }));
   }).catch((e: Error) => {
     exitWithError("There was an error generating a config: " + e.message);
