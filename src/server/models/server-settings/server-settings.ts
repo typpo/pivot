@@ -46,7 +46,7 @@ function ensureOneOfOrNull<T>(name: string, thing: T, things: T[]): void {
 }
 
 function ensureNumber(n: any): void {
-  if (typeof n !== 'number') throw new Error(`port must be a number`);
+  if (typeof n !== 'number') throw new Error(`must be a number`);
 }
 
 function basicEqual(a: any, b: any): boolean {
