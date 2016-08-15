@@ -15,6 +15,7 @@
  */
 
 import { BaseImmutable, Property, isInstanceOf } from 'immutable-class';
+import { SettingsLocation, SettingsLocationJS } from '../settings-location/settings-location';
 
 export type Iframe = "allow" | "deny";
 export type TrustProxy = "none" | "always";
@@ -32,14 +33,10 @@ export interface ServerSettingsValue {
   trustProxy?: TrustProxy;
   strictTransportSecurity?: StrictTransportSecurity;
   auth?: string;
-  settingsUri?: string;
+  settingsLocation?: SettingsLocation;
 }
 
 export type ServerSettingsJS = ServerSettingsValue;
-
-function parseIntFromPossibleString(x: any) {
-  return typeof x === 'string' ? parseInt(x, 10) : x;
-}
 
 function ensureOneOfOrNull<T>(name: string, thing: T, things: T[]): void {
   if (thing == null) return;
@@ -73,7 +70,7 @@ export class ServerSettings extends BaseImmutable<ServerSettingsValue, ServerSet
   }
 
   static fromJS(parameters: ServerSettingsJS): ServerSettings {
-    parameters.port = parseIntFromPossibleString(parameters.port);
+    if (typeof parameters.port === 'string') parameters.port = parseInt(parameters.port, 10);
     if (parameters.serverRoot && parameters.serverRoot[0] !== '/') parameters.serverRoot = '/' + parameters.serverRoot;
     if (parameters.serverRoot === '/') parameters.serverRoot = null;
     return new ServerSettings(BaseImmutable.jsToValue(ServerSettings.PROPERTIES, parameters));
@@ -91,7 +88,7 @@ export class ServerSettings extends BaseImmutable<ServerSettingsValue, ServerSet
     { name: 'trustProxy', defaultValue: ServerSettings.DEFAULT_TRUST_PROXY, possibleValues: ServerSettings.TRUST_PROXY_VALUES },
     { name: 'strictTransportSecurity', defaultValue: ServerSettings.DEFAULT_STRICT_TRANSPORT_SECURITY, possibleValues: ServerSettings.STRICT_TRANSPORT_SECURITY_VALUES },
     { name: 'auth', defaultValue: null },
-    { name: 'settingsUri', defaultValue: null }
+    { name: 'settingsLocation', defaultValue: null, immutableClass: SettingsLocation }
   ];
 
   public port: number;
@@ -105,7 +102,7 @@ export class ServerSettings extends BaseImmutable<ServerSettingsValue, ServerSet
   public trustProxy: TrustProxy;
   public strictTransportSecurity: StrictTransportSecurity;
   public auth: string;
-  public settingsUri: string;
+  public settingsLocation: SettingsLocation;
 
   constructor(parameters: ServerSettingsValue) {
     super(parameters);
@@ -121,6 +118,6 @@ export class ServerSettings extends BaseImmutable<ServerSettingsValue, ServerSet
   public getIframe: () => Iframe;
   public getTrustProxy: () => TrustProxy;
   public getStrictTransportSecurity: () => StrictTransportSecurity;
-
+  public getSettingsLocation: () => SettingsLocation;
 }
 BaseImmutable.finalize(ServerSettings);

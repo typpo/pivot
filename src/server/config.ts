@@ -261,10 +261,25 @@ const CLUSTER_TYPES: SupportedType[] = ['druid', 'postgres', 'mysql'];
 var settingsStore: SettingsStore = null;
 
 if (serverSettingsFilePath) {
-  if (1 !== 1) {
-    settingsStore = SettingsStore.fromStateStore(require('../../../pivot-mysql-state-store/index.js').stateStoreFactory());
-  } else if (SERVER_SETTINGS.settingsUri) {
-    settingsStore = SettingsStore.fromWritableFile(path.resolve(anchorPath, SERVER_SETTINGS.settingsUri));
+  var settingsLocation = SERVER_SETTINGS.getSettingsLocation();
+  if (settingsLocation) {
+    switch (settingsLocation.getLocation()) {
+      case 'file':
+        settingsStore = SettingsStore.fromWritableFile(path.resolve(anchorPath, settingsLocation.uri), settingsLocation.getFormat());
+        break;
+
+      case 'mysql':
+        // ToDo: make this not incomplete.
+        settingsStore = SettingsStore.fromStateStore(require('../../../pivot-mysql-state-store/index.js').stateStoreFactory());
+        break;
+
+      case 'postgres':
+        throw new Error('todo');
+
+      default:
+        exitWithError(`unknown location '${settingsLocation.location}'`);
+    }
+
   } else {
     settingsStore = SettingsStore.fromReadOnlyFile(serverSettingsFilePath);
   }

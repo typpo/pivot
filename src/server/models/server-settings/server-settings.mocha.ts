@@ -63,7 +63,10 @@ describe('ServerSettings', () => {
       },
       {
         port: 9091,
-        settingsUri: 'path/to/my/file.yaml'
+        settingsLocation: {
+          location: 'file',
+          uri: 'path/to/my/file.yaml'
+        }
       }
     ]);
   });

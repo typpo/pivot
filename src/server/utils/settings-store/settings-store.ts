@@ -21,12 +21,19 @@ import { inlineVars } from '../../../common/utils/general/general';
 import { MANIFESTS } from '../../../common/manifests/index';
 import { AppSettings } from '../../../common/models/index';
 import { appSettingsToYAML } from '../../../common/utils/yaml-helper/yaml-helper';
+import { Format } from '../../models/index';
 
-function readSettingsYamlFactory(filepath: string, inline = false) {
+function readSettingsFactory(filepath: string, format: Format, inline = false) {
   return () => {
     return Q(fs.readFile(filepath, 'utf-8')
       .then((fileData) => {
-        var appSettingsJS = yaml.safeLoad(fileData);
+        switch (format) {
+          case 'json': return JSON.parse(fileData);
+          case 'yaml': return yaml.safeLoad(fileData);
+          default: throw new Error(`unsupported format '${format}'`);
+        }
+      })
+      .then((appSettingsJS) => {
         if (inline) appSettingsJS = inlineVars(appSettingsJS, process.env);
         return AppSettings.fromJS(appSettingsJS, { visualizations: MANIFESTS });
       })
@@ -34,10 +41,14 @@ function readSettingsYamlFactory(filepath: string, inline = false) {
   };
 }
 
-function writeSettingsYamlFactory(filepath: string) {
+function writeSettingsFactory(filepath: string, format: Format) {
   return (appSettings: AppSettings) => {
     return Q.fcall(() => {
-      return appSettingsToYAML(appSettings, false);
+      switch (format) {
+        case 'json': return JSON.stringify(appSettings);
+        case 'yaml': return appSettingsToYAML(appSettings, false);
+        default: throw new Error(`unsupported format '${format}'`);
+      }
     })
       .then((appSettingsYAML) => {
         return fs.writeFile(filepath, appSettingsYAML);
@@ -59,14 +70,14 @@ export class SettingsStore {
 
   static fromReadOnlyFile(filepath: string): SettingsStore {
     var settingsStore = new SettingsStore();
-    settingsStore.readSettings = readSettingsYamlFactory(filepath, true);
+    settingsStore.readSettings = readSettingsFactory(filepath, 'yaml', true);
     return settingsStore;
   }
 
-  static fromWritableFile(filepath: string): SettingsStore {
+  static fromWritableFile(filepath: string, format: Format): SettingsStore {
     var settingsStore = new SettingsStore();
-    settingsStore.readSettings = readSettingsYamlFactory(filepath);
-    settingsStore.writeSettings = writeSettingsYamlFactory(filepath);
+    settingsStore.readSettings = readSettingsFactory(filepath, format);
+    settingsStore.writeSettings = writeSettingsFactory(filepath, format);
     return settingsStore;
   }
 

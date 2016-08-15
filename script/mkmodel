@@ -63,7 +63,7 @@ export class ${camelName} extends BaseImmutable<${camelName}Value, ${camelName}J
   }
 
   static PROPERTIES: Property[] = [
-  
+    //{ name: 'blah' }
   ];
   
   //public blah: string;

@@ -154,8 +154,8 @@ export class Measure extends BaseImmutable<MeasureValue, MeasureJS> {
 
   static PROPERTIES = [
     { name: 'name', validate: verifyUrlSafeName },
-    { name: 'title' },
-    { name: 'units' },
+    { name: 'title', defaultValue: null },
+    { name: 'units', defaultValue: null },
     { name: 'formula' },
     { name: 'format', defaultValue: Measure.DEFAULT_FORMAT }
   ];
