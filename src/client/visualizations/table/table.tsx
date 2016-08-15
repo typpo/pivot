@@ -234,7 +234,7 @@ export class Table extends BaseVisualization<TableState> {
     return measuresArray.map(measure => {
       var measureName = measure.name;
       var measureValues = flatData.map((d: Datum) => d[measureName] as number);
-      return formatterFromData(measureValues, measure.get('format'));
+      return formatterFromData(measureValues, measure.getFormat());
     });
   }
 
